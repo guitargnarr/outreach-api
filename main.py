@@ -68,6 +68,9 @@ class BusinessDB(Base):
     contact_email = Column(String(200), default="")
     contact_phone = Column(String(50), default="")
     contact_role = Column(String(100), default="")
+    contact_linkedin = Column(String(500), default="")
+    address = Column(String(500), default="")
+    platform = Column(String(200), default="")
     demo_value_prop = Column(Text, default="")
     notes = Column(Text, default="")
     portfolio_card_id = Column(String(100), default="")
@@ -115,6 +118,9 @@ class BusinessCreate(BaseModel):
     contact_email: str = ""
     contact_phone: str = ""
     contact_role: str = ""
+    contact_linkedin: str = ""
+    address: str = ""
+    platform: str = ""
     demo_value_prop: str = ""
     notes: str = ""
     portfolio_card_id: str = ""
@@ -132,6 +138,9 @@ class BusinessUpdate(BaseModel):
     contact_email: str | None = None
     contact_phone: str | None = None
     contact_role: str | None = None
+    contact_linkedin: str | None = None
+    address: str | None = None
+    platform: str | None = None
     demo_value_prop: str | None = None
     notes: str | None = None
     portfolio_card_id: str | None = None
@@ -151,6 +160,9 @@ class BusinessOut(BaseModel):
     contact_email: str
     contact_phone: str
     contact_role: str
+    contact_linkedin: str
+    address: str
+    platform: str
     demo_value_prop: str
     notes: str
     portfolio_card_id: str
@@ -194,6 +206,9 @@ class SyncItem(BaseModel):
     contact_email: str = ""
     contact_phone: str = ""
     contact_role: str = ""
+    contact_linkedin: str = ""
+    address: str = ""
+    platform: str = ""
     demo_value_prop: str = ""
     notes: str = ""
     portfolio_card_id: str = ""
@@ -499,16 +514,17 @@ def export_csv(
     writer = csv.writer(output)
     writer.writerow([
         "Name", "Slug", "Category", "Demo URL", "Existing Website",
-        "Website Quality", "Priority", "Status", "Contact Name",
-        "Contact Email", "Contact Phone", "Contact Role",
-        "Demo Value Prop", "Notes", "Created", "Updated",
+        "Website Quality", "Platform", "Priority", "Status", "Contact Name",
+        "Contact Email", "Contact Phone", "Contact Role", "LinkedIn",
+        "Address", "Demo Value Prop", "Notes", "Created", "Updated",
     ])
     for biz in businesses:
         writer.writerow([
             biz.name, biz.slug, biz.category, biz.demo_url,
-            biz.existing_website, biz.website_quality, biz.priority,
-            biz.status, biz.contact_name, biz.contact_email,
-            biz.contact_phone, biz.contact_role, biz.demo_value_prop,
+            biz.existing_website, biz.website_quality, biz.platform,
+            biz.priority, biz.status, biz.contact_name, biz.contact_email,
+            biz.contact_phone, biz.contact_role, biz.contact_linkedin,
+            biz.address, biz.demo_value_prop,
             biz.notes, biz.created_at, biz.updated_at,
         ])
     output.seek(0)
