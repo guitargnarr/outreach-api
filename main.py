@@ -250,9 +250,29 @@ def slugify(name: str) -> str:
 # --- App Setup ---
 
 
+def _run_migrations():
+    """Add columns that create_all() won't add to existing tables."""
+    from sqlalchemy import text, inspect
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        existing = [c["name"] for c in inspector.get_columns("businesses")]
+        migrations = [
+            ("contact_linkedin", "VARCHAR(500) DEFAULT ''"),
+            ("address", "VARCHAR(500) DEFAULT ''"),
+            ("platform", "VARCHAR(200) DEFAULT ''"),
+        ]
+        for col_name, col_type in migrations:
+            if col_name not in existing:
+                conn.execute(text(
+                    f'ALTER TABLE businesses ADD COLUMN {col_name} {col_type}'
+                ))
+        conn.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    _run_migrations()
     yield
 
 
