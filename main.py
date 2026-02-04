@@ -173,6 +173,12 @@ class BusinessOut(BaseModel):
         from_attributes = True
 
 
+class SendEmailRequest(BaseModel):
+    subject: str
+    body: str
+    to_email: str
+
+
 class EventCreate(BaseModel):
     event_type: str
     details: str = ""
@@ -420,6 +426,69 @@ def create_event(
     db.commit()
     db.refresh(event)
     return event
+
+
+# --- Send Email ---
+
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "")
+SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD", "")
+
+
+def _send_smtp_email(to_email: str, subject: str, body: str):
+    """Send email via Gmail SMTP. Raises on failure."""
+    import smtplib
+    from email.mime.text import MIMEText
+
+    if not SMTP_EMAIL or not SMTP_APP_PASSWORD:
+        raise HTTPException(
+            status_code=500, detail="SMTP not configured on server"
+        )
+
+    msg = MIMEText(body, "plain")
+    msg["From"] = SMTP_EMAIL
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg["Reply-To"] = SMTP_EMAIL
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(SMTP_EMAIL, SMTP_APP_PASSWORD)
+        server.send_message(msg)
+
+
+@app.post("/businesses/{business_id}/send-email")
+def send_email(
+    business_id: int,
+    data: SendEmailRequest,
+    user: dict = Depends(require_auth),
+    db: Session = Depends(get_db),
+):
+    biz = db.query(BusinessDB).filter(BusinessDB.id == business_id).first()
+    if not biz:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    try:
+        _send_smtp_email(data.to_email, data.subject, data.body)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send: {e}")
+
+    # Log outreach event
+    event = OutreachEventDB(
+        business_id=business_id,
+        event_type="email_sent",
+        details=f"To: {data.to_email} | Subject: {data.subject}",
+    )
+    db.add(event)
+
+    # Auto-update status from prospect to contacted
+    if biz.status == "prospect":
+        biz.status = "contacted"
+    biz.updated_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return {"status": "sent", "to": data.to_email, "business_id": business_id}
 
 
 # --- Metrics ---
