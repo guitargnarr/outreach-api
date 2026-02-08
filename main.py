@@ -9,12 +9,15 @@ import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 
+import bcrypt as _bcrypt
 import jwt
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-import bcrypt as _bcrypt
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from sqlalchemy import (
     Column,
     DateTime,
@@ -34,6 +37,14 @@ JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 7
 
+# --- Rate Limiter ---
+limiter = Limiter(key_func=get_remote_address)
+
+ALLOWED_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://localhost:5173"
+).split(",")
+
 
 def _hash_pw(pw: str) -> str:
     return _bcrypt.hashpw(pw.encode(), _bcrypt.gensalt()).decode()
@@ -43,10 +54,7 @@ def _verify_pw(pw: str, hashed: str) -> bool:
     return _bcrypt.checkpw(pw.encode(), hashed.encode())
 
 
-PASSPHRASE_HASH = os.getenv(
-    "PASSPHRASE_HASH",
-    _hash_pw("charioteer"),  # Default for local dev only
-)
+PASSPHRASE_HASH = os.getenv("PASSPHRASE_HASH", "")
 
 
 # --- Database Models ---
@@ -258,7 +266,7 @@ def slugify(name: str) -> str:
 
 def _run_migrations():
     """Add columns that create_all() won't add to existing tables."""
-    from sqlalchemy import text, inspect
+    from sqlalchemy import inspect, text
     with engine.connect() as conn:
         inspector = inspect(engine)
         existing = [c["name"] for c in inspector.get_columns("businesses")]
@@ -283,10 +291,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Outreach CRM API", version="1.0.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -297,9 +307,12 @@ app.add_middleware(
 
 
 @app.post("/auth/login")
-def login(req: LoginRequest):
+@limiter.limit("5/minute")
+def login(req: LoginRequest, request: Request):
+    if not PASSPHRASE_HASH:
+        raise HTTPException(status_code=503, detail="Auth not configured")
     if _verify_pw(req.passphrase, PASSPHRASE_HASH):
-        token = create_token({"sub": "charioteer", "role": "admin"})
+        token = create_token({"sub": "admin", "role": "admin"})
         return {"token": token, "expires_in": JWT_EXPIRY_DAYS * 86400}
     raise HTTPException(status_code=401, detail="Access denied")
 
