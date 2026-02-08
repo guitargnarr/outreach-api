@@ -1,5 +1,6 @@
 """Tests for authentication endpoints."""
 
+
 def test_login_with_correct_passphrase(client):
     response = client.post("/auth/login", json={"passphrase": "charioteer"})
     assert response.status_code == 200

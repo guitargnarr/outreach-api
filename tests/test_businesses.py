@@ -2,6 +2,7 @@
 
 # --- Helper ---
 
+
 def create_business(client, auth_headers, name="Test Biz", **overrides):
     payload = {"name": name, **overrides}
     return client.post("/businesses", json=payload, headers=auth_headers)
