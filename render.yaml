@@ -11,3 +11,5 @@ services:
         sync: false
       - key: PASSPHRASE_HASH
         sync: false
+      - key: CORS_ORIGINS
+        value: "https://projectlavos.com"

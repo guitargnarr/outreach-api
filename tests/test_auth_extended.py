@@ -38,7 +38,7 @@ def test_login_returns_valid_token_for_verify(client):
     verify_resp = client.get("/auth/verify", headers={"Authorization": f"Bearer {token}"})
     assert verify_resp.status_code == 200
     assert verify_resp.json()["valid"] is True
-    assert verify_resp.json()["user"] == "charioteer"
+    assert verify_resp.json()["user"] == "admin"
 
 
 def test_login_token_has_correct_expiry(client):

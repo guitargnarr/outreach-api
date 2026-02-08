@@ -20,6 +20,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 os.environ.pop("DATABASE_URL", None)  # noqa: E402
 
+# Set a known passphrase hash for tests (bcrypt hash of "charioteer")
+if "PASSPHRASE_HASH" not in os.environ:
+    import bcrypt as _bcrypt
+    os.environ["PASSPHRASE_HASH"] = _bcrypt.hashpw(
+        b"charioteer", _bcrypt.gensalt()
+    ).decode()
+
 from database import Base, get_db  # noqa: E402
 from main import app, create_token  # noqa: E402
 
@@ -56,8 +63,8 @@ def setup_database():
 @pytest.fixture
 def client(setup_database):
     """FastAPI test client with patched lifespan to use test engine."""
-    import main as main_mod
     import database as db_mod
+    import main as main_mod
     with patch.object(main_mod, "engine", test_engine),          patch.object(db_mod, "engine", test_engine):
         with TestClient(app) as c:
             yield c
@@ -70,4 +77,4 @@ def auth_headers():
     return {"Authorization": f"Bearer {token}"}
 
 
-from helpers import create_test_business, create_test_event  # noqa: F401
+from helpers import create_test_business, create_test_event  # noqa: E402, F401

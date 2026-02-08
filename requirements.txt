@@ -4,6 +4,7 @@ sqlalchemy
 pg8000
 bcrypt
 pyjwt
+slowapi
 python-dotenv
 pytest
 httpx
