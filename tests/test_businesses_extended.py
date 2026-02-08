@@ -5,9 +5,7 @@ slugify edge cases, update partial fields, delete cascades events,
 and additional validation scenarios.
 """
 
-
-def _create_business(client, auth_headers, name="Test Biz", **overrides):
-    return client.post("/businesses", json={"name": name, **overrides}, headers=auth_headers).json()
+from helpers import create_test_business as _create_business
 
 
 # --- Category Filter ---

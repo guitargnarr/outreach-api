@@ -14,8 +14,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-# Ensure the project root is on sys.path
+# Ensure the project root and tests dir are on sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 os.environ.pop("DATABASE_URL", None)  # noqa: E402
 
@@ -67,3 +68,6 @@ def auth_headers():
     """Return a valid Bearer token header for authenticated requests."""
     token = create_token({"sub": "testuser", "role": "admin"})
     return {"Authorization": f"Bearer {token}"}
+
+
+from helpers import create_test_business, create_test_event  # noqa: F401

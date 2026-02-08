@@ -7,6 +7,8 @@ from datetime import datetime, timedelta, timezone
 
 import jwt as pyjwt
 
+from main import JWT_SECRET
+
 
 def test_expired_token_is_rejected(client):
     """An expired JWT should return 401."""
@@ -15,7 +17,7 @@ def test_expired_token_is_rejected(client):
         "role": "admin",
         "exp": datetime.now(timezone.utc) - timedelta(hours=1),
     }
-    token = pyjwt.encode(expired_payload, "dev-secret-change-in-production", algorithm="HS256")
+    token = pyjwt.encode(expired_payload, JWT_SECRET, algorithm="HS256")
     response = client.get("/auth/verify", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401
     assert "expired" in response.json()["detail"].lower()

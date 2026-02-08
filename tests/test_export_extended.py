@@ -6,9 +6,7 @@ Covers: all CSV columns present, field content verification, and special charact
 import csv
 import io
 
-
-def _create_business(client, auth_headers, name="Export Biz", **overrides):
-    return client.post("/businesses", json={"name": name, **overrides}, headers=auth_headers).json()
+from helpers import create_test_business as _create_business
 
 
 def test_export_csv_contains_all_columns(client, auth_headers):

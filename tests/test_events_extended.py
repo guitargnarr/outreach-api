@@ -4,9 +4,7 @@ Covers: auth requirement, event appears in business detail, multiple events
 ordering, and edge cases.
 """
 
-
-def _create_business(client, auth_headers, name="Event Biz"):
-    return client.post("/businesses", json={"name": name}, headers=auth_headers).json()
+from helpers import create_test_business as _create_business
 
 
 # --- Auth ---
@@ -71,8 +69,12 @@ def test_create_event_updates_business_timestamp(client, auth_headers):
     )
 
     detail = client.get(f"/businesses/{biz['id']}", headers=auth_headers).json()
-    # updated_at should be >= original (may be equal in fast test execution)
-    assert detail["updated_at"] >= original_updated
+    # Parse timestamps for robust comparison (string comparison is fragile)
+    from datetime import datetime
+    fmt = "%Y-%m-%dT%H:%M:%S"
+    updated = datetime.strptime(detail["updated_at"][:19], fmt)
+    original = datetime.strptime(original_updated[:19], fmt)
+    assert updated >= original
 
 
 # --- Missing event_type ---

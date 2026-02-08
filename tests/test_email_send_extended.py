@@ -6,43 +6,38 @@ multiple emails to same business, and SMTP not configured scenario.
 
 from unittest.mock import patch
 
-
-def _create_business(client, auth_headers, name="Email Biz", **overrides):
-    return client.post("/businesses", json={"name": name, **overrides}, headers=auth_headers).json()
+from helpers import create_test_business as _create_business
 
 
 # --- Validation ---
 
 def test_send_email_missing_subject(client, auth_headers):
     biz = _create_business(client, auth_headers)
-    with patch("main._send_smtp_email"):
-        response = client.post(
-            f"/businesses/{biz['id']}/send-email",
-            json={"to_email": "test@example.com", "body": "Hello"},
-            headers=auth_headers,
-        )
+    response = client.post(
+        f"/businesses/{biz['id']}/send-email",
+        json={"to_email": "test@example.com", "body": "Hello"},
+        headers=auth_headers,
+    )
     assert response.status_code == 422  # Missing required field
 
 
 def test_send_email_missing_body(client, auth_headers):
     biz = _create_business(client, auth_headers)
-    with patch("main._send_smtp_email"):
-        response = client.post(
-            f"/businesses/{biz['id']}/send-email",
-            json={"to_email": "test@example.com", "subject": "Hello"},
-            headers=auth_headers,
-        )
+    response = client.post(
+        f"/businesses/{biz['id']}/send-email",
+        json={"to_email": "test@example.com", "subject": "Hello"},
+        headers=auth_headers,
+    )
     assert response.status_code == 422  # Missing required field
 
 
 def test_send_email_missing_to_email(client, auth_headers):
     biz = _create_business(client, auth_headers)
-    with patch("main._send_smtp_email"):
-        response = client.post(
-            f"/businesses/{biz['id']}/send-email",
-            json={"subject": "Hello", "body": "Test"},
-            headers=auth_headers,
-        )
+    response = client.post(
+        f"/businesses/{biz['id']}/send-email",
+        json={"subject": "Hello", "body": "Test"},
+        headers=auth_headers,
+    )
     assert response.status_code == 422  # Missing required field
 
 

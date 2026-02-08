@@ -5,16 +5,7 @@ response rate calculation, and edge cases.
 """
 
 
-def _create_business(client, auth_headers, name="Biz", **overrides):
-    return client.post("/businesses", json={"name": name, **overrides}, headers=auth_headers).json()
-
-
-def _create_event(client, auth_headers, business_id, event_type="call", details=""):
-    return client.post(
-        f"/businesses/{business_id}/events",
-        json={"event_type": event_type, "details": details},
-        headers=auth_headers,
-    ).json()
+from helpers import create_test_business as _create_business, create_test_event as _create_event
 
 
 # --- Auth ---
