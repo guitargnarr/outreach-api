@@ -1,6 +1,4 @@
 """Tests for authentication endpoints."""
-import pytest
-
 
 def test_login_with_correct_passphrase(client):
     response = client.post("/auth/login", json={"passphrase": "charioteer"})
