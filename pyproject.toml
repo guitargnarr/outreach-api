@@ -1,0 +1,26 @@
+[project]
+name = "outreach-api"
+version = "0.1.0"
+description = "Outreach CRM API backend for projectlavos.com client outreach tracking"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy",
+    "pg8000",
+    "bcrypt",
+    "pyjwt",
+    "python-dotenv",
+]
+
+[tool.ruff]
+line-length = 127
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
